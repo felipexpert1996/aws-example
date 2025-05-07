@@ -48,7 +48,7 @@ def lambda_handler(event, context):
             }
 
         s3 = boto3.resource('s3')
-        s3.Bucket(os.environ['BUCKET_NAME']).put_object(Key=+f'{params.get('name')}.jpg', Body=image_bytes)
+        s3.Bucket(os.environ['BUCKET_NAME']).put_object(Key=f'{params.get('name')}', Body=image_bytes)
         
         logger.info('Image received and processed successfully')
         return {
@@ -60,5 +60,5 @@ def lambda_handler(event, context):
         logger.error(f'Error {str(e)}')
         return {
             'statusCode': 500,
-            'body': f'Error: {str(e)}'
+            'body': 'Error: Internal server error'
         }
