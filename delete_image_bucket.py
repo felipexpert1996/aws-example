@@ -1,8 +1,10 @@
 import os
 import logging
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 s3 = boto3.resource('s3')
+resource_dynamodb = boto3.resource('dynamodb')
 logger = logging.getLogger()
 logger.setLevel("INFO")
 
@@ -19,7 +21,8 @@ def lambda_handler(event, context):
             }
 
         s3 = boto3.resource('s3')
-        logger.info(s3.Bucket(os.environ['BUCKET_NAME']).Object(key=f'{params.get('name')}').delete())
+        s3.Bucket(os.environ['BUCKET_NAME']).Object(key=f'{params.get('name')}').delete()
+        delete_from_db(params.get('name'))
         
         logger.info('Image deleted successfully')
         return {
@@ -33,3 +36,10 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': 'Error: Internal server error'
         }
+
+def delete_from_db(file_name):
+    table = resource_dynamodb.Table(os.environ['DYNAMO_TABLE'])
+    response = table.scan(FilterExpression=Attr('name').eq(file_name))
+    items = response['Items']
+    for item in items:
+        table.delete_item(Key={'id': item['id']})
